@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xybook-experiments"
+version = "0.1.0"
+description = "XY-Book Experiment Service"
+requires-python = ">=3.11"
+dependencies = [
+    "xybook-common",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xybook_experiments"]
+
+[tool.pytest.ini_options]
