@@ -14,6 +14,8 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(title="XY-Book Experiment Service", version="0.1.0")
     app.include_router(api_router)
+    from .api.router import reports_router
+    app.include_router(reports_router)
 
     @app.get("/health")
     async def health():

@@ -8,9 +8,11 @@ async def compose_reply(
     persona: PersonaArchetype, post: dict, llm: LLMProvider
 ) -> str:
     """Generate a reply to a post using the LLM provider."""
+    identity = persona.variant_name or persona.name
+    bio = persona.variant_bio or persona.demographics
     phrases = "、".join(persona.language_style.typical_phrases[:3])
     prompt = (
-        f"你是{persona.name}，{persona.demographics}。\n"
+        f"你是{identity}（{persona.name}型），{bio}。\n"
         f"你的性格：{'、'.join(persona.core_traits)}\n"
         f"你说话的风格：{persona.language_style.tone}，常用语：{phrases}\n\n"
         f"帖子内容：{post.get('content', '')}\n"
@@ -24,9 +26,11 @@ async def compose_original_post(
     persona: PersonaArchetype, llm: LLMProvider
 ) -> str:
     """Generate an original post from the agent."""
+    identity = persona.variant_name or persona.name
+    bio = persona.variant_bio or persona.demographics
     phrases = "、".join(persona.language_style.typical_phrases[:3])
     prompt = (
-        f"你是{persona.name}，{persona.demographics}。\n"
+        f"你是{identity}（{persona.name}型），{bio}。\n"
         f"你的性格：{'、'.join(persona.core_traits)}\n"
         f"你说话的风格：{persona.language_style.tone}，常用语：{phrases}\n\n"
         f"你想发一条帖子，表达自己的观点或感受。"

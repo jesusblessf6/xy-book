@@ -90,6 +90,8 @@ class PersonaArchetype:
     browsing: BrowsingConfig = field(default_factory=BrowsingConfig)
     behavior: BehaviorConfig = field(default_factory=BehaviorConfig)
     silence_patterns: SilencePatterns = field(default_factory=SilencePatterns)
+    variant_name: str = ""
+    variant_bio: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         import dataclasses
@@ -134,4 +136,6 @@ class PersonaArchetype:
             ),
             behavior=BehaviorConfig(**beh),
             silence_patterns=SilencePatterns(**sp),
+            variant_name=data.get("variant_name", ""),
+            variant_bio=data.get("variant_bio", ""),
         )

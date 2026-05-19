@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime, timezone
 
@@ -11,7 +12,7 @@ from xybook_common.exceptions import NotFoundError
 
 from ..models.agent import Agent
 from ..personas.templates import ARCHETYPES
-from ..personas.variants import instantiate_persona
+from ..personas.variants import generate_username, instantiate_persona
 from ..scheduler.agent_scheduler import AgentScheduler
 from ..schemas.agent import AgentCreate, AgentRead, BatchCreateRequest
 from ..worker.decisions import compute_next_browse_time
@@ -27,6 +28,14 @@ async def get_db(request: Request) -> AsyncSession:
     factory = _get_session_factory(request)
     async with factory() as session:
         yield session
+
+
+def _extract_city(bio: str) -> str | None:
+    """Extract city name from variant bio like '32岁，北京，数据科学家'."""
+    parts = bio.split("，")
+    if len(parts) >= 2:
+        return parts[1].strip()
+    return None
 
 
 @api_router.get("/", response_model=list[AgentRead], tags=["agents"])
@@ -53,26 +62,31 @@ async def create_agent(body: AgentCreate, request: Request):
     community = request.app.state.community
     factory = _get_session_factory(request)
 
+    # Create persona variant (need variant_id first)
+    async with factory() as db:
+        stmt = select(Agent).where(Agent.persona_archetype == body.persona_archetype)
+        result = await db.execute(stmt)
+        variant_id = len(list(result.scalars().all()))
+
+    persona = instantiate_persona(body.persona_archetype, variant_id)
+
     # Create user in Community Service
-    username = body.username or f"{body.persona_archetype}_{uuid.uuid4().hex[:6]}"
     archetype = ARCHETYPES[body.persona_archetype]
+    username = body.username or generate_username(persona.variant_name, body.persona_archetype)
+    bio = body.bio or persona.variant_bio or archetype.demographics
+    location = _extract_city(persona.variant_bio) if persona.variant_bio else None
+
     user_data = await community.create_user(
         username=username,
-        bio=body.bio or f"{archetype.demographics}",
+        bio=bio,
+        location=location,
         tags=[archetype.name],
         is_agent=True,
     )
     user_id = uuid.UUID(user_data["id"])
 
-    # Create persona variant
+    # Save agent
     async with factory() as db:
-        # Count existing variants
-        stmt = select(Agent).where(Agent.persona_archetype == body.persona_archetype)
-        result = await db.execute(stmt)
-        variant_id = len(list(result.scalars().all()))
-
-        persona = instantiate_persona(body.persona_archetype, variant_id)
-
         agent = Agent(
             user_id=user_id,
             persona_archetype=body.persona_archetype,
@@ -95,12 +109,9 @@ async def batch_create_agents(body: BatchCreateRequest, request: Request):
         )
 
     results = []
-    prefix = body.username_prefix or body.persona_archetype
-
     for i in range(body.count):
         create_body = AgentCreate(
             persona_archetype=body.persona_archetype,
-            username=f"{prefix}_{uuid.uuid4().hex[:6]}",
         )
         agent = await create_agent(create_body, request)
         results.append(agent)

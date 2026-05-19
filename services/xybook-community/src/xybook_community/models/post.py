@@ -28,9 +28,9 @@ class Post(TimestampMixin, Base):
 
     # 树形结构
     parent_id: Mapped[uuid.UUID | None] = mapped_column(index=True)
-    root_post_id: Mapped[uuid.UUID] = mapped_column(nullable=False, index=True)
+    root_post_id: Mapped[uuid.UUID | None] = mapped_column(index=True)
     depth: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    thread_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    thread_path: Mapped[str] = mapped_column(String(500), nullable=False, default="", server_default="")
 
     # 情绪预计算
     emotion_primary: Mapped[str | None] = mapped_column(String(20))

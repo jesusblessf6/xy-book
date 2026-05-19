@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="XY-Book Pipeline Service", version="0.1.0")
+    app = FastAPI(title="XY-Book Pipeline Service", version="0.1.0", lifespan=lifespan)
     app.include_router(api_router)
 
     @app.get("/health")

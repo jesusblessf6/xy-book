@@ -19,3 +19,9 @@ class Agent(TimestampMixin, Base):
     last_posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     next_browse_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     persona_config: Mapped[dict] = mapped_column(JSONB, nullable=False)
+
+    @property
+    def variant_name(self) -> str:
+        if self.persona_config and isinstance(self.persona_config, dict):
+            return self.persona_config.get("variant_name", "")
+        return ""

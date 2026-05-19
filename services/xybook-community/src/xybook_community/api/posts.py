@@ -45,7 +45,6 @@ async def create_post(body: PostCreate, db: AsyncSession = Depends(get_db)):
             raise NotFoundError("Parent post not found")
         post.depth = parent.depth + 1
         post.root_post_id = parent.root_post_id
-        post.thread_path = f"{parent.thread_path}.{post.id}"
         # Update comments count on parent
         parent.comments_count += 1
         # Create notification for parent author
@@ -54,6 +53,12 @@ async def create_post(body: PostCreate, db: AsyncSession = Depends(get_db)):
                 db, user_id=parent.author_id, from_user_id=body.author_id,
                 post_id=parent.id, ntype="reply",
             )
+
+    db.add(post)
+    await db.flush()  # Generate post.id
+
+    if body.parent_id is not None:
+        post.thread_path = f"{parent.thread_path}.{post.id}"
     else:
         post.root_post_id = post.id
         post.thread_path = str(post.id)

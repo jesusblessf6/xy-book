@@ -23,6 +23,7 @@ class AgentRead(BaseModel):
     user_id: uuid.UUID
     persona_archetype: str
     persona_variant: int
+    variant_name: str = ""
     status: str
     last_browsed_at: datetime | None
     last_posted_at: datetime | None
